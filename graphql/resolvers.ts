@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import getConfig from "next/config";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
-import Post from "../mongo/models/Post";
 
 const JWT_SECRET = getConfig().serverRuntimeConfig.JWT_SECRET;
 
@@ -19,6 +18,8 @@ function createUser(data: any) {
     hashedPassword: bcrypt.hashSync(data.password, salt),
   };
 }
+
+
 
 function validPassword(user: any, password: any) {
   return bcrypt.compareSync(password, user.hashedPassword);
@@ -43,11 +44,9 @@ export const resolvers = {
       }
     },
 
-    posts: (_parent: any, _args: any, _context: any, _info: any) => {
-      return Post.find();
-    },
   },
   Mutation: {
+
     async signUp(_parent: any, _args: any, _context: any, _info: any) {
       const user = createUser(_args.input);
 
@@ -55,7 +54,6 @@ export const resolvers = {
 
       return { user };
     },
-
     async signIn(_parent: any, _args: any, _context: any, _info: any) {
       const user = users.find((user: any) => user.email === _args.input.email);
 
@@ -98,10 +96,6 @@ export const resolvers = {
 
       return true;
     },
-    createPost(_parent: any, _args: any, _context: any, _info: any) {
-      const newPost = new Post({ name: _args.name });
-      newPost.save();
-      return newPost;
-    },
+
   },
 };
