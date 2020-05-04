@@ -4,8 +4,7 @@ import jwt from "jsonwebtoken";
 import getConfig from "next/config";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
-import DataLoader from "dataloader";
-import Post from "../mongo-db/models/Post";
+import Post from "../mongo/models/Post";
 
 const JWT_SECRET = getConfig().serverRuntimeConfig.JWT_SECRET;
 
@@ -43,9 +42,13 @@ export const resolvers = {
         }
       }
     },
+
+    posts: (_parent: any, _args: any, _context: any, _info: any) => {
+      return Post.find();
+    },
   },
   Mutation: {
-    async signUp(_parent: any, _args: any, context: any, _info: any) {
+    async signUp(_parent: any, _args: any, _context: any, _info: any) {
       const user = createUser(_args.input);
 
       users.push(user);
@@ -53,7 +56,7 @@ export const resolvers = {
       return { user };
     },
 
-    async signIn(_parent: any, _args: any, context: any, _info: any) {
+    async signIn(_parent: any, _args: any, _context: any, _info: any) {
       const user = users.find((user: any) => user.email === _args.input.email);
 
       if (user && validPassword(user, _args.input.password)) {
@@ -65,7 +68,7 @@ export const resolvers = {
           }
         );
 
-        context.res.setHeader(
+        _context.res.setHeader(
           "Set-Cookie",
           cookie.serialize("token", token, {
             httpOnly: true,
@@ -81,8 +84,8 @@ export const resolvers = {
 
       throw new UserInputError("Invalid email and password combination");
     },
-    async signOut(_parent: any, _args: any, context: any, _info: any) {
-      context.res.setHeader(
+    async signOut(_parent: any, _args: any, _context: any, _info: any) {
+      _context.res.setHeader(
         "Set-Cookie",
         cookie.serialize("token", "", {
           httpOnly: true,
@@ -95,25 +98,10 @@ export const resolvers = {
 
       return true;
     },
-
-    createPost: (parent: any, args: any, ctx: any, info: any) => {
-      const Postdata = new Post({ name: args.name, user_id: args.user_id });
-      Postdata.save();
-      return Postdata;
+    createPost(_parent: any, _args: any, _context: any, _info: any) {
+      const newPost = new Post({ name: _args.name });
+      newPost.save();
+      return newPost;
     },
   },
-  Post: {
-    id: (post: any, _args: any, _context: any) => post.id,
-    user: (post: any, _args: any, { loader }: any) => {
-      return loader.post.load(post.user_id);
-    },
-  },
-};
-
-const loader = {
-  post: new DataLoader((ids) =>
-    Post.find((rows: any) =>
-      ids.map((id) => rows.find((row: any) => row.id === id))
-    )
-  ),
 };

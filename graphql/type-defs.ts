@@ -29,11 +29,10 @@ export const typeDefs = gql`
     signUp(input: SignUpInput!): SignUpPayload!
     signIn(input: SignInInput!): SignInPayload!
     signOut: Boolean!
-    createPost(name: String, user_id: String): Post
+    createPost(name: String): Post!
   }
   type Post {
     id: ID!
     name: String!
-    user: User!
   }
 `;
