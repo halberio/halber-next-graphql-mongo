@@ -3,21 +3,23 @@ import gql from "graphql-tag";
 export const typeDefs = gql`
   type User {
     id: ID!
+    name: String!
     email: String!
+    password: String
+  }
+  type AuthData {
+    userId: ID!
+    token: String!
+    tokenExpiration: Int!
   }
   input SignUpInput {
+    name: String!
     email: String!
     password: String!
   }
   input SignInInput {
     email: String!
     password: String!
-  }
-  type SignUpPayload {
-    user: User!
-  }
-  type SignInPayload {
-    user: User!
   }
   type Query {
     user(id: ID!): User!
@@ -26,8 +28,8 @@ export const typeDefs = gql`
     posts(first: Int = 25, skip: Int = 0): [Post!]!
   }
   type Mutation {
-    signUp(input: SignUpInput!): SignUpPayload!
-    signIn(input: SignInInput!): SignInPayload!
+    signUp(input: SignUpInput): User!
+    login(input: SignInInput!): AuthData!
     signOut: Boolean!
     createPost(name: String): Post!
   }

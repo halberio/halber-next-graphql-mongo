@@ -1,86 +1,62 @@
-import { AuthenticationError, UserInputError } from "apollo-server-micro";
 import cookie from "cookie";
 import jwt from "jsonwebtoken";
-import getConfig from "next/config";
 import bcrypt from "bcrypt";
-import { v4 } from "uuid";
-
-const JWT_SECRET = getConfig().serverRuntimeConfig.JWT_SECRET;
-
-const users: any = [];
-
-function createUser(data: any) {
-  const salt = bcrypt.genSaltSync();
-
-  return {
-    id: v4(),
-    email: data.email,
-    hashedPassword: bcrypt.hashSync(data.password, salt),
-  };
-}
-
-
-
-function validPassword(user: any, password: any) {
-  return bcrypt.compareSync(password, user.hashedPassword);
-}
+import User from "../mongo/models/User";
 
 export const resolvers = {
   Query: {
-    async viewer(_parent: any, _args: any, context: any, _info: any) {
-      const { token } = cookie.parse(context.req.headers.cookie ?? "");
-      if (token) {
-        try {
-          const { id, email }: any = jwt.verify(token, JWT_SECRET);
-
-          return users.find(
-            (user: any) => user.id === id && user.email === email
-          );
-        } catch {
-          throw new AuthenticationError(
-            "Authentication token is invalid, please log in"
-          );
-        }
-      }
+    users(_parent: any, _args: any, _context: any, _info: any) {
+      const data = User.find();
+      return data;
     },
-
+    user(_parent: any, _args: any, _context: any, _info: any) {
+      const user = User.findById(_args.id);
+      return user;
+    },
   },
   Mutation: {
-
     async signUp(_parent: any, _args: any, _context: any, _info: any) {
-      const user = createUser(_args.input);
+      try {
+        const existingUser = await User.findOne({ email: _args.input.email });
+        if (existingUser) {
+          throw new Error("User exists already.");
+        }
+        const hashedPassword = await bcrypt.hash(_args.input.password, 12);
 
-      users.push(user);
+        const userData = new User({
+          email: _args.input.email,
+          name: _args.input.name,
+          password: hashedPassword,
+        });
 
-      return { user };
-    },
-    async signIn(_parent: any, _args: any, _context: any, _info: any) {
-      const user = users.find((user: any) => user.email === _args.input.email);
+        const user = await userData.save();
 
-      if (user && validPassword(user, _args.input.password)) {
-        const token = jwt.sign(
-          { email: user.email, id: user.id, time: new Date() },
-          JWT_SECRET,
-          {
-            expiresIn: "6h",
-          }
-        );
-
-        _context.res.setHeader(
-          "Set-Cookie",
-          cookie.serialize("token", token, {
-            httpOnly: true,
-            maxAge: 6 * 60 * 60,
-            path: "/",
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-          })
-        );
-
-        return { user };
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        };
+      } catch (err) {
+        throw err;
       }
-
-      throw new UserInputError("Invalid email and password combination");
+    },
+    async login(_parent: any, _args: any, _context: any, _info: any) {
+      const user = await User.findOne({ email: _args.input.email });
+      if (!user) {
+        throw new Error("User does not exist!");
+      }
+      const isEqual = await bcrypt.compare(_args.input.password, user.password);
+      if (!isEqual) {
+        throw new Error("Password is incorrect!");
+      }
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        "somesupersecretkey",
+        {
+          expiresIn: "1h",
+        }
+      );
+      return { userId: user.id, token: token, tokenExpiration: 1 };
     },
     async signOut(_parent: any, _args: any, _context: any, _info: any) {
       _context.res.setHeader(
@@ -96,6 +72,5 @@ export const resolvers = {
 
       return true;
     },
-
   },
 };

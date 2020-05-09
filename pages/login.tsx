@@ -4,36 +4,51 @@ import gql from "graphql-tag";
 import { useMutation } from "@apollo/react-hooks";
 import { getErrorMessage } from "../lib/form";
 //import { useRouter } from "next/router";
-import { Form, Input, Button, Checkbox } from "antd";
 import Layout from "../components/Layout";
-const SignUpMutation = gql`
-  mutation SignUpMutation($name: String!, $email: String!, $password: String!) {
-    signUp(input: { name: $name, email: $email, password: $password }) {
-      email
-      name
+import { Form, Input, Button, Checkbox } from "antd";
+import { useDispatchUser } from "../contexts/UserContextProvider";
+const SignInMutation = gql`
+  mutation SignInMutation($email: String!, $password: String!) {
+    login(input: { email: $email, password: $password }) {
+      userId
+      token
+      tokenExpiration
     }
   }
 `;
 
-function SignUp() {
-  const [signUp] = useMutation(SignUpMutation);
+function Login() {
+  const [Login] = useMutation(SignInMutation);
   const [errorMsg, setErrorMsg] = React.useState();
-  //const router = useRouter();
+  //@ts-ignore
+  const { dispatch } = useDispatchUser();
 
-  async function handleSubmit(values: any) {
+  const handleSubmit = async (values: any) => {
     try {
-      await signUp({
+      await Login({
         variables: values,
+      }).then((data: any) => {
+        if (data.data.login.token) {
+          const user = {
+            name: values.name,
+            email: values.email,
+            token: data.data.login.token,
+          };
+          dispatch({
+            type: "SET_USER",
+            user: user,
+          });
+        }
       });
-      console.log("values");
+
       //router.push("/signin");
     } catch (error) {
       setErrorMsg(getErrorMessage(error));
     }
-  }
+  };
 
   return (
-    <Layout title={"Sign Up"}>
+    <Layout title={"Login"}>
       <Form
         name="basic"
         initialValues={{ remember: true }}
@@ -45,15 +60,10 @@ function SignUp() {
           marginTop: "10rem",
         }}
       >
-        <h1>Sign Up</h1>
+        <h1>Login</h1>
         {errorMsg && <p>{errorMsg}</p>}
         <Form.Item
-          name="name"
-          rules={[{ required: true, message: "Please input your name!" }]}
-        >
-          <Input placeholder={"Name"} />
-        </Form.Item>
-        <Form.Item
+          label="Email"
           name="email"
           rules={[
             {
@@ -63,13 +73,15 @@ function SignUp() {
             },
           ]}
         >
-          <Input placeholder={"Email"} />
+          <Input />
         </Form.Item>
+
         <Form.Item
+          label="Password"
           name="password"
           rules={[{ required: true, message: "Please input your password!" }]}
         >
-          <Input.Password placeholder={"Password"} />
+          <Input.Password />
         </Form.Item>
 
         <Form.Item name="remember" valuePropName="checked">
@@ -86,4 +98,4 @@ function SignUp() {
   );
 }
 
-export default withApollo(SignUp);
+export default withApollo(Login);

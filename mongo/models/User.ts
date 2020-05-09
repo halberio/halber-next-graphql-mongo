@@ -1,16 +1,18 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
-var postSchema = new Schema({
+var userSchema = new Schema({
   name: String,
+  email: String,
+  password: String,
 });
 if (!modelAlreadyDeclared()) {
-  mongoose.model("Post", postSchema);
+  mongoose.model("User", userSchema);
 }
 
 function modelAlreadyDeclared() {
   try {
-    mongoose.model("Post"); // it throws an error if the model is still not defined
+    mongoose.model("User"); // it throws an error if the model is still not defined
     return true;
   } catch (e) {
     return false;
