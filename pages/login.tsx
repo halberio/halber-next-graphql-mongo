@@ -20,7 +20,6 @@ const SignInMutation = gql`
 function Login() {
   const [Login] = useMutation(SignInMutation);
   const [errorMsg, setErrorMsg] = React.useState();
-  //@ts-ignore
   const { dispatch } = useDispatchUser();
 
   const handleSubmit = async (values: any) => {
@@ -63,7 +62,6 @@ function Login() {
         <h1>Login</h1>
         {errorMsg && <p>{errorMsg}</p>}
         <Form.Item
-          label="Email"
           name="email"
           rules={[
             {
@@ -73,21 +71,20 @@ function Login() {
             },
           ]}
         >
-          <Input />
+          <Input placeholder="Email" />
         </Form.Item>
 
         <Form.Item
-          label="Password"
           name="password"
           rules={[{ required: true, message: "Please input your password!" }]}
         >
-          <Input.Password />
+          <Input.Password placeholder="Password"  />
         </Form.Item>
 
         <Form.Item name="remember" valuePropName="checked">
           <Checkbox>Remember me</Checkbox>
         </Form.Item>
-
+            
         <Form.Item>
           <Button type="primary" htmlType="submit">
             Submit

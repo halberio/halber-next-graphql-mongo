@@ -20,6 +20,7 @@ const reducer = (state: any, action: any) => {
       throw new Error(`Unknown action: ${action.type}`);
   }
 };
+
 export const UserContextProvider = (props: any) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 

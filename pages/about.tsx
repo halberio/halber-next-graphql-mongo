@@ -2,10 +2,9 @@ import Link from "next/link";
 
 export default () => (
   <div>
-    This is a static page goto{" "}
+    This is a static page  
     <Link href="/">
-      <a>dynamic</a>
-    </Link>{" "}
-    page.
+      <a> goto page dynamic</a>
+    </Link>
   </div>
 );
