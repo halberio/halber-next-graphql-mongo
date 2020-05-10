@@ -1,3 +1,4 @@
+import { User } from './../interfaces/index';
 import gql from "graphql-tag";
 
 export const typeDefs = gql`
@@ -5,12 +6,11 @@ export const typeDefs = gql`
     id: ID
     name: String!
     email: String!
+    password: String
+    token: String
+    tokenExpiration: Int
   }
-  type AuthData {
-    userId: ID!
-    token: String!
-    tokenExpiration: Int!
-  }
+ 
   input SignUpInput {
     name: String!
     email: String!
@@ -28,12 +28,12 @@ export const typeDefs = gql`
     viewer: User
     posts(first: Int = 25, skip: Int = 0): [Post!]!
   }
-  type AuthPayload {
-    user: User
+  type LoginPayload {
+    user:User!
   }
   type Mutation {
     signUp(input: SignUpInput): User!
-    login(email: String!, password: String!): AuthPayload
+    login(input: SignInInput!): LoginPayload!
     signOut: Boolean!
     createPost(name: String): Post!
   }

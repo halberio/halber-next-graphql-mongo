@@ -9,8 +9,9 @@ export const resolvers = {
       const data = User.find();
       return data;
     },
-    user(_parent: any, _args: any, _context: any, _info: any) {
+    user: (_parent: any, _args: any, _context: any, _info: any) => {
       const user = User.findById(_args.id);
+
       return user;
     },
   },
@@ -45,6 +46,7 @@ export const resolvers = {
       if (!user) {
         throw new Error("User does not exist!");
       }
+     
       const isEqual = await bcrypt.compare(_args.input.password, user.password);
       if (!isEqual) {
         throw new Error("Password is incorrect!");
@@ -56,8 +58,21 @@ export const resolvers = {
           expiresIn: "1h",
         }
       );
-      return { userId: user.id, token: token, tokenExpiration: 1 };
+      user.token = token;
+      user.tokenExpiration = 1;
+      await user.save();
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          token: token,
+          tokenExpiration: 1,
+        },
+      };
+      
     },
+
     async signOut(_parent: any, _args: any, _context: any, _info: any) {
       _context.res.setHeader(
         "Set-Cookie",
