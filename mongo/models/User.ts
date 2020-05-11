@@ -5,8 +5,9 @@ var userSchema = new Schema({
   name: String!,
   email: String!,
   password: String!,
-  token: String!,
-  tokenExpiration: Number!
+  token:{type: String!, default:""},
+  tokenExpiration: {type: String!, default:""},
+  created_at: { type: Date, default: Date.now },
 });
 if (!modelAlreadyDeclared()) {
   mongoose.model("User", userSchema);

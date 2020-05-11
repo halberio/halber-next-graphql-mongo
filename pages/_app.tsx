@@ -5,8 +5,10 @@ import { AppProps } from "next/app";
 //stylesheets import
 import "../stylesheets/theme.less";
 import { UserContextProvider } from "../contexts/UserContextProvider";
-import { Header } from "../components/Header";
+import Header from "../components/Header";
 function Application({ Component, pageProps, router }: AppProps) {
+  
+  
   return (
     <UserContextProvider>
       <Header/>

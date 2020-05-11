@@ -108,7 +108,8 @@ export function withApollo(PageComponent: any, { ssr = true } = {}) {
  * Creates or reuses apollo client in the browser.
  * @param  {Object} initialState
  */
-function initApolloClient(ctx: any, initialState: any) {
+
+function initApolloClient(ctx: any, initialState:any) {
   // Make sure to create a new client for every server-side request so that data
   // isn't shared between connections (which would be bad)
   if (typeof window === "undefined") {
@@ -124,12 +125,22 @@ function initApolloClient(ctx: any, initialState: any) {
 }
 
 /**
+ * 
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
  */
-function createApolloClient(ctx = {}, initialState = {}) {
+
+function createApolloClient(ctx = {}, _initialState:any ) {
   const ssrMode = typeof window === "undefined";
-  const cache = new InMemoryCache().restore(initialState);
+  const cache = new InMemoryCache({addTypename:true});
+  const data = {
+    isLoggedIn: false,
+    name:null,
+    email:null,
+    token:null
+  };
+  
+  cache.writeData({data});
 
   // Check out https://github.com/zeit/next.js/pull/4611 if you want to use the AWSAppSyncClient
   return new ApolloClient({
@@ -137,7 +148,9 @@ function createApolloClient(ctx = {}, initialState = {}) {
     link: createIsomorphLink(ctx),
     cache,
   });
+  
 }
+
 
 function createIsomorphLink(ctx: any) {
   if (typeof window === "undefined") {

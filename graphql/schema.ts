@@ -1,4 +1,3 @@
-import { User } from './../interfaces/index';
 import gql from "graphql-tag";
 
 export const typeDefs = gql`
@@ -10,7 +9,7 @@ export const typeDefs = gql`
     token: String
     tokenExpiration: Int
   }
- 
+
   input SignUpInput {
     name: String!
     email: String!
@@ -20,21 +19,29 @@ export const typeDefs = gql`
     email: String!
     password: String!
   }
-
+  
+  type payloadAuthUser {
+    isLoggedIn: Boolean!
+    name:String!
+    email:String!
+    token:String!
+  }
+  
   type Query {
+    authUser: payloadAuthUser!
     user(id: ID!): User!
+    getUserWithToken(token:String!): payloadAuthUser!
     currentUser: User
     users: [User]!
-    viewer: User
     posts(first: Int = 25, skip: Int = 0): [Post!]!
   }
   type LoginPayload {
-    user:User!
+    user: User!
   }
   type Mutation {
     signUp(input: SignUpInput): User!
     login(input: SignInInput!): LoginPayload!
-    signOut: Boolean!
+    logout: Boolean!
     createPost(name: String): Post!
   }
   type Post {

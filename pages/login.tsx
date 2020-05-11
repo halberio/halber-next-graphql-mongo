@@ -1,41 +1,51 @@
 import React from "react";
 import { withApollo } from "../graphql/client";
 import gql from "graphql-tag";
-import { useMutation } from "@apollo/react-hooks";
+import { useMutation, useApolloClient } from "@apollo/react-hooks";
 import { getErrorMessage } from "../lib/form";
-//import { useRouter } from "next/router";
 import Layout from "../components/Layout";
 import { Form, Input, Button, Checkbox } from "antd";
 import { useDispatchUser } from "../contexts/UserContextProvider";
+
 const SignInMutation = gql`
   mutation SignInMutation($email: String!, $password: String!) {
     login(input: { email: $email, password: $password }) {
-      userId
-      token
-      tokenExpiration
+      user {
+        name
+        email
+        token
+        tokenExpiration
+      }
     }
   }
 `;
 
-function Login() {
+const Login = () => {
   const [Login] = useMutation(SignInMutation);
   const [errorMsg, setErrorMsg] = React.useState();
   const { dispatch } = useDispatchUser();
-
+  const client = useApolloClient();
   const handleSubmit = async (values: any) => {
     try {
       await Login({
         variables: values,
       }).then((data: any) => {
-        if (data.data.login.token) {
-          const user = {
-            name: values.name,
-            email: values.email,
-            token: data.data.login.token,
-          };
+        if (data.data.login.user) {
           dispatch({
-            type: "SET_USER",
-            user: user,
+            type: "LOGIN_REQUEST",
+            user: {
+              name: data.data.login.name,
+              email: data.data.login.email,
+              token: data.data.login.token,
+            },
+          });
+          client.writeData({
+            data: {
+              isLoggedIn: true,
+              name: data.data.login.user.name,
+              email: data.data.login.user.email,
+              token: data.data.login.user.token,
+            },
           });
         }
       });
@@ -45,7 +55,7 @@ function Login() {
       setErrorMsg(getErrorMessage(error));
     }
   };
-
+  
   return (
     <Layout title={"Login"}>
       <Form
@@ -78,13 +88,13 @@ function Login() {
           name="password"
           rules={[{ required: true, message: "Please input your password!" }]}
         >
-          <Input.Password placeholder="Password"  />
+          <Input.Password placeholder="Password" />
         </Form.Item>
 
         <Form.Item name="remember" valuePropName="checked">
           <Checkbox>Remember me</Checkbox>
         </Form.Item>
-            
+
         <Form.Item>
           <Button type="primary" htmlType="submit">
             Submit
@@ -93,6 +103,6 @@ function Login() {
       </Form>
     </Layout>
   );
-}
+};
 
 export default withApollo(Login);

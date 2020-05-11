@@ -11,8 +11,28 @@ export const resolvers = {
     },
     user: (_parent: any, _args: any, _context: any, _info: any) => {
       const user = User.findById(_args.id);
-
       return user;
+    },
+    getUserWithToken: async (
+      _parent: any,
+      _args: any,
+      _context: any,
+      _info: any
+    ) => {
+      let resultUser = null;
+      await User.findOne({ token: _args.token }, (_err: any, user: any) => {
+        if (_args.token.length>1 &&  user.token === _args.token) {
+          resultUser = {
+            isLoggedIn:true,
+            name: user.name,
+            email: user.email,
+            token: user.token,
+          };
+          console.log(user.name);
+        }
+      });
+      console.log(resultUser);
+      return resultUser
     },
   },
   Mutation: {
@@ -41,22 +61,33 @@ export const resolvers = {
         throw err;
       }
     },
-    async login(_parent: any, _args: any, _context: any, _info: any) {
+    async login(_parent: any, _args: any, context: any, _info: any) {
       const user = await User.findOne({ email: _args.input.email });
       if (!user) {
         throw new Error("User does not exist!");
       }
-     
+
       const isEqual = await bcrypt.compare(_args.input.password, user.password);
       if (!isEqual) {
         throw new Error("Password is incorrect!");
       }
       const token = jwt.sign(
-        { userId: user.id, email: user.email },
-        "somesupersecretkey",
+        { email: user.email, id: user.id, time: new Date() },
+        "JWT_SECRET",
         {
-          expiresIn: "1h",
+          expiresIn: "6h",
         }
+      );
+
+      context.res.setHeader(
+        "Set-Cookie",
+        cookie.serialize("token", token, {
+          httpOnly: true,
+          maxAge: 6 * 60 * 60,
+          path: "/",
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+        })
       );
       user.token = token;
       user.tokenExpiration = 1;
@@ -70,10 +101,9 @@ export const resolvers = {
           tokenExpiration: 1,
         },
       };
-      
     },
 
-    async signOut(_parent: any, _args: any, _context: any, _info: any) {
+    async logout(_parent: any, _args: any, _context: any, _info: any) {
       _context.res.setHeader(
         "Set-Cookie",
         cookie.serialize("token", "", {
@@ -84,7 +114,7 @@ export const resolvers = {
           secure: process.env.NODE_ENV === "production",
         })
       );
-
+        
       return true;
     },
   },

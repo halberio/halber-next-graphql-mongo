@@ -1,20 +1,25 @@
-import React, { useReducer, useContext, createContext, useEffect } from "react";
+import React, { useReducer, useContext, createContext } from "react";
 
 // @ts-ignore
 export const UserContext = createContext();
 let initialState = {
   user: null,
+  isLoggedIn:false
 };
 const reducer = (state: any, action: any) => {
+  console.log(`%c ${action.type}`, ' color: #0B698F; font-weight:bold')
   switch (action.type) {
-    case "SET_USER":
+    case "LOGIN_REQUEST":
       return {
         ...state,
         user: action.user,
+        token:action.user.token,
+        isLoggedIn:true
       };
     case "LOGOUT":
       return {
         ...state,
+        isLoggedIn:false
       };
     default:
       throw new Error(`Unknown action: ${action.type}`);
@@ -23,11 +28,7 @@ const reducer = (state: any, action: any) => {
 
 export const UserContextProvider = (props: any) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-
-  useEffect(() => {
-    console.log(state);
-  }, [state]);
-
+  
   return (
     <UserContext.Provider
       value={{
@@ -39,4 +40,7 @@ export const UserContextProvider = (props: any) => {
     </UserContext.Provider>
   );
 };
-export const useDispatchUser = (): any => useContext(UserContext);
+export const useDispatchUser = (): any => {
+ 
+  return useContext(UserContext);
+};
